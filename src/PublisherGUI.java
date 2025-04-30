@@ -75,29 +75,39 @@ public class PublisherGUI extends JFrame {
         });
 
         // header layout: name |   [search   ] [Logout]
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(12, 24, 12, 24));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));  // Reduced padding
         GroupLayout layout = new GroupLayout(headerPanel);
         headerPanel.setLayout(layout);
 
-        searchTextField.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+        // Adjust font sizes for compact header
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));  // Reduced from 24
+        searchTextField.setFont(new Font("Segoe UI", Font.PLAIN, 14));  // Reduced from 18
 
+        // Compact logout button styling
+        logoutButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));  // Reduced from 16
+        logoutButton.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));  // Reduced padding
+
+        // Horizontal layout
         layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                         .addComponent(headerLabel)
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 300, Short.MAX_VALUE)
-                        .addComponent(searchTextField, 300, 300, 300)
-                        .addGap(12)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                                .addComponent(searchTextField, GroupLayout.PREFERRED_SIZE, 400, GroupLayout.PREFERRED_SIZE)
+                        )
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(logoutButton)
-                        .addGap(24))
+                )
         );
+
+        // Vertical layout
         layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
                         .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                 .addComponent(headerLabel)
-                                .addComponent(searchTextField, 36, 36, 36)
-                                .addComponent(logoutButton, 36, 36, 36))
-                        .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(searchTextField, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(logoutButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE))
+                )
         );
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);

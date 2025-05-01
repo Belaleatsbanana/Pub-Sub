@@ -1,9 +1,11 @@
 package Subscriber;
 
+import common.Message;
+import common.PublisherInfo;
+
 import java.rmi.*;
 
 
 public interface StudentIF extends Remote{
-    public void receiveNotification(String msg) throws RemoteException;
-    public void subscribe(String msg) throws RemoteException;
+    public void receiveNotification(PublisherInfo publisher, Message message) throws RemoteException;
 }

@@ -21,5 +21,7 @@ public interface ServiceIF extends Remote {
     void unsubscribe(String studentId, String publisherId) throws RemoteException;
 
     void publish(String publisherId, Message message) throws RemoteException;
+
     List<StudentInfo> getSubscribers(String publisherId) throws RemoteException;
+    List<PublisherInfo> getAvailablePublishers() throws RemoteException;
 }

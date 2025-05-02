@@ -1,18 +1,34 @@
 package Publisher;
 
+import Service.ServiceIF;
+import common.PublisherInfo;
+
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.Date;
 
 public class PublisherGUI extends JFrame {
+    private PublisherIMP publisherIMP;
+    private PublisherInfo publisherInfo;
+    private ServiceIF service;
 
     private JPanel headerPanel;
     private JLabel headerLabel;
     private JTextField searchTextField;
     private JPanel contentHolder;
 
-    public PublisherGUI() {
+    private DefaultListModel<String> postsModel = new DefaultListModel<>();
+    private DefaultListModel<String> subscribersModel = new DefaultListModel<>();
+    private JTextArea postInputArea;
+
+    public PublisherGUI(PublisherIMP publisherIMP,PublisherInfo publisherInfo,ServiceIF service) {
         initComponents();
         customizePublisherUI();
     }
@@ -146,7 +162,7 @@ public class PublisherGUI extends JFrame {
         Color hoverBg    = new Color(220,220,220);
         Color selectedBg = new Color(200,230,255);
         JButton[] navButtons = new JButton[items.length];
-        final String[] current = {null};
+        final String[] current = {null};  // Fixed declaration
 
         for (int i = 0; i < items.length; i++) {
             String key = items[i];
@@ -171,24 +187,26 @@ public class PublisherGUI extends JFrame {
             b.setBackground(normalBg);
             b.setForeground(Color.DARK_GRAY);
 
-            // hover
-            b.addMouseListener(new MouseAdapter(){
-                public void mouseEntered(MouseEvent e){
+            // Hover effects
+            b.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
                     if (!key.equals(current[0])) b.setBackground(hoverBg);
                 }
-                public void mouseExited(MouseEvent e){
+                @Override
+                public void mouseExited(MouseEvent e) {
                     if (!key.equals(current[0])) b.setBackground(normalBg);
                 }
             });
 
-            // select
+            // Single action listener
             b.addActionListener(e -> {
                 CardLayout cl = (CardLayout) contentHolder.getLayout();
                 cl.show(contentHolder, key);
                 current[0] = key;
-                for (JButton btn: navButtons) {
-                    if (btn!=null) {
-                        btn.setBackground(btn.getText().equals(key)? selectedBg : normalBg);
+                for (JButton btn : navButtons) {
+                    if (btn != null) {
+                        btn.setBackground(btn.getText().equals(key) ? selectedBg : normalBg);
                     }
                 }
             });
@@ -199,11 +217,11 @@ public class PublisherGUI extends JFrame {
         }
         nav.add(btnPanel);
 
-        // Content area
+        // Content area with real panels
         contentHolder = new JPanel(new CardLayout());
-        contentHolder.add(panel("Dashboard View"), "Dashboard");
-        contentHolder.add(panel("Content View"),   "Content");
-        contentHolder.add(panel("Community View"), "Community");
+        contentHolder.add(createDashboardPanel(), "Dashboard");
+        contentHolder.add(createContentPanel(), "Content");
+        contentHolder.add(createCommunityPanel(), "Community");
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, nav, contentHolder);
         split.setDividerLocation(220);
@@ -240,7 +258,294 @@ public class PublisherGUI extends JFrame {
         return new ImageIcon(img);
     }
 
+    private JPanel createDashboardPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(245, 245, 245));
+
+        // Header
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        headerPanel.setBackground(new Color(245, 245, 245));
+        JLabel headerLabel = new JLabel("Dashboard");
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        headerLabel.setForeground(new Color(60, 60, 60));
+        headerPanel.add(headerLabel);
+
+        // Stats Cards
+        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 15, 0));
+        statsPanel.setBorder(new EmptyBorder(15, 0, 25, 0));
+        statsPanel.setBackground(new Color(245, 245, 245));
+
+        String[] stats = {"Total Posts", "Subscribers", "Engagement"};
+        String[] values = {"42", "1.2K", "86%"};
+        Color[] colors = {new Color(100, 150, 240), new Color(240, 120, 100), new Color(100, 200, 150)};
+
+        for(int i = 0; i < stats.length; i++) {
+            JPanel card = new JPanel(new BorderLayout());
+            card.setBackground(Color.WHITE);
+            card.setBorder(BorderFactory.createCompoundBorder(
+                    new RoundedBorder(15, new Color(220, 220, 220)),
+                    new EmptyBorder(20, 20, 20, 20)
+            ));
+
+            JLabel statValue = new JLabel(values[i]);
+            statValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
+            statValue.setForeground(colors[i]);
+
+            JLabel statLabel = new JLabel(stats[i]);
+            statLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            statLabel.setForeground(new Color(120, 120, 120));
+
+            card.add(statValue, BorderLayout.CENTER);
+            card.add(statLabel, BorderLayout.SOUTH);
+            statsPanel.add(card);
+        }
+
+        // Post Composition Panel
+        JPanel composePanel = new JPanel(new BorderLayout());
+        composePanel.setBackground(Color.WHITE);
+        composePanel.setBorder(BorderFactory.createCompoundBorder(
+                new RoundedBorder(15, new Color(220, 220, 220)),
+                new EmptyBorder(20, 20, 20, 20)
+        ));
+
+        // Styled Text Area with Floating Label
+        JPanel inputContainer = new JPanel(new BorderLayout());
+        inputContainer.setBorder(new EmptyBorder(0, 0, 15, 0));
+
+        JTextArea postInput = new JTextArea();
+        postInput.setLineWrap(true);
+        postInput.setWrapStyleWord(true);
+        postInput.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        postInput.setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(0, 0, 2, 0, new Color(200, 200, 200)),
+                new EmptyBorder(15, 10, 10, 10)
+        ));
+
+        JLabel inputLabel = new JLabel("What's on your mind?");
+        inputLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        inputLabel.setForeground(new Color(150, 150, 150));
+        inputLabel.setBorder(new EmptyBorder(0, 10, 0, 0));
+
+        inputContainer.add(inputLabel, BorderLayout.NORTH);
+        inputContainer.add(new JScrollPane(postInput), BorderLayout.CENTER);
+
+        // Character Counter
+        JLabel charCounter = new JLabel("0/500");
+        charCounter.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        charCounter.setForeground(new Color(150, 150, 150));
+        charCounter.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        postInput.getDocument().addDocumentListener(new DocumentListener() {
+            public void update() {
+                charCounter.setText(postInput.getText().length() + "/500");
+            }
+            public void insertUpdate(DocumentEvent e) { update(); }
+            public void removeUpdate(DocumentEvent e) { update(); }
+            public void changedUpdate(DocumentEvent e) { update(); }
+        });
+
+        // Publish Button with Icon
+        JButton publishButton = new JButton("Publish");
+        publishButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        publishButton.setForeground(Color.WHITE);
+        publishButton.setBackground(new Color(100, 150, 240));
+        publishButton.setBorder(new RoundedBorder(8, new Color(80, 130, 220)));
+        publishButton.setFocusPainted(false);
+        publishButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Add icon using Unicode character
+        publishButton.setText(" Publish"); // Use appropriate icon font
+
+        // Button hover effects
+        publishButton.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) {
+                publishButton.setBackground(new Color(80, 130, 220));
+            }
+            public void mouseExited(MouseEvent e) {
+                publishButton.setBackground(new Color(100, 150, 240));
+            }
+        });
+
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.add(charCounter, BorderLayout.CENTER);
+        buttonPanel.add(publishButton, BorderLayout.EAST);
+        buttonPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+
+        composePanel.add(inputContainer, BorderLayout.CENTER);
+        composePanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Recent Posts Preview
+        JPanel recentPostsPanel = new JPanel();
+        recentPostsPanel.setLayout(new BoxLayout(recentPostsPanel, BoxLayout.Y_AXIS));
+        recentPostsPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        recentPostsPanel.setBackground(new Color(245, 245, 245));
+
+        JLabel recentLabel = new JLabel("Recent Posts");
+        recentLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        recentLabel.setForeground(new Color(60, 60, 60));
+        recentLabel.setBorder(new EmptyBorder(0, 0, 15, 0));
+
+
+        // Assemble main panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.add(headerPanel);
+        contentPanel.add(statsPanel);
+        contentPanel.add(composePanel);
+        contentPanel.add(recentPostsPanel);
+
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.setBorder(null);
+
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createPostCard(String content) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                new RoundedBorder(12, new Color(220, 220, 220)),
+                new EmptyBorder(15, 15, 15, 15)
+        ));
+
+        JTextArea postContent = new JTextArea(content);
+        postContent.setLineWrap(true);
+        postContent.setWrapStyleWord(true);
+        postContent.setEditable(false);
+        postContent.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        postContent.setBackground(Color.WHITE);
+
+        JLabel postDate = new JLabel("2 hours ago");
+        postDate.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        postDate.setForeground(new Color(150, 150, 150));
+
+        card.add(postContent, BorderLayout.CENTER);
+        card.add(postDate, BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    // Custom rounded border class
+    class RoundedBorder implements Border {
+        private int radius;
+        private Color color;
+
+        public RoundedBorder(int radius, Color color) {
+            this.radius = radius;
+            this.color = color;
+        }
+
+        public Insets getBorderInsets(Component c) {
+            return new Insets(this.radius+1, this.radius+1, this.radius+1, this.radius+1);
+        }
+
+        public boolean isBorderOpaque() {
+            return true;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.drawRoundRect(x, y, width-1, height-1, radius, radius);
+            g2.dispose();
+        }
+    }
+    private void publishPost() {
+        String postText = postInputArea.getText().trim();
+        if (!postText.isEmpty()) {
+            String timestamp = new Date().toString();
+            postsModel.addElement(postText + " - " + timestamp);
+            postInputArea.setText("");
+        }
+    }
+
+    private JPanel createContentPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        // Add sample posts
+        postsModel.addElement("Welcome to our platform! - " + new Date().toString());
+        postsModel.addElement("First post! Excited to connect! - " + new Date().toString());
+
+        JList<String> postsList = new JList<>(postsModel);
+        postsList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                                                          int index, boolean isSelected,
+                                                          boolean cellHasFocus) {
+                JPanel panel = new JPanel(new BorderLayout());
+                panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+                String[] parts = value.toString().split(" - ", 2);
+                JTextArea content = new JTextArea(parts[0]);
+                content.setLineWrap(true);
+                content.setWrapStyleWord(true);
+                content.setEditable(false);
+
+                JLabel timestamp = new JLabel(parts.length > 1 ? parts[1] : "");
+                timestamp.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+                timestamp.setForeground(Color.GRAY);
+
+                panel.add(content, BorderLayout.CENTER);
+                panel.add(timestamp, BorderLayout.SOUTH);
+                return panel;
+            }
+        });
+
+        panel.add(new JScrollPane(postsList), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private JPanel createCommunityPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        // Hardcoded subscribers
+        String[] subscribers = {
+                "Alice Johnson", "Bob Smith", "Charlie Brown",
+                "Diana Miller", "Eve Wilson", "Frank Davis"
+        };
+        for (String sub : subscribers) {
+            subscribersModel.addElement(sub);
+        }
+
+        JList<String> subscribersList = new JList<>(subscribersModel);
+        subscribersList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value,
+                                                          int index, boolean isSelected,
+                                                          boolean cellHasFocus) {
+                JPanel panel = new JPanel(new BorderLayout(10, 10));
+                panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+                JLabel icon = new JLabel(createLetterIcon(
+                        value.toString().charAt(0),
+                        32,
+                        new Color(100, 150, 240),
+                        Color.WHITE
+                ));
+
+                JLabel name = new JLabel(value.toString());
+                name.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+                panel.add(icon, BorderLayout.WEST);
+                panel.add(name, BorderLayout.CENTER);
+                return panel;
+            }
+        });
+
+        panel.add(new JScrollPane(subscribersList), BorderLayout.CENTER);
+        return panel;
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new PublisherGUI().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+            PublisherGUI gui = new PublisherGUI(null, null, null);
+            gui.setVisible(true);
+        });
     }
 }

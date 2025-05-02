@@ -1,5 +1,9 @@
 package Subscriber;
 
+import Service.ServiceIF;
+import common.PublisherInfo;
+import common.StudentInfo;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
@@ -7,6 +11,9 @@ import javax.swing.plaf.basic.BasicTabbedPaneUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Map;
 
 public class StudentGUI extends javax.swing.JFrame {
     private javax.swing.JLabel headerLabel;
@@ -17,10 +24,20 @@ public class StudentGUI extends javax.swing.JFrame {
     private javax.swing.JTabbedPane tabbedPanel;
     private javax.swing.JButton logoutButton;
 
-    public StudentGUI() {
+    private ServiceIF service;
+    private StudentInfo studentInfo;
+    private JButton refreshButton;
+
+    ArrayList<PublisherInfo> publishers = new ArrayList<>();
+
+    public StudentGUI(ServiceIF service, StudentInfo studentInfo) {
+        this.service = service;
+        this.studentInfo = studentInfo;
+
         initComponents();
         customizeTabbedPane();
         customizeHomeUI();
+        initializeServicesTab();
     }
 
     private void initComponents() {
@@ -158,6 +175,7 @@ public class StudentGUI extends javax.swing.JFrame {
                     JOptionPane.YES_NO_OPTION
             );
             if (confirm == JOptionPane.YES_OPTION) {
+
                 System.exit(0);
             }
         });
@@ -380,39 +398,145 @@ public class StudentGUI extends javax.swing.JFrame {
         return new ImageIcon(img);
     }
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(StudentGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(StudentGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(StudentGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(StudentGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+    private void initializeServicesTab() {
+        servicesPanel.setLayout(new BorderLayout());
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new StudentGUI().setVisible(true);
-            }
+        // Refresh button panel
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        refreshButton = new JButton("Refresh Publishers");
+        refreshButton.addActionListener(e -> refreshPublishers());
+        topPanel.add(refreshButton);
+
+        // Grid panel for publisher cards
+        JPanel gridPanel = createPublishersGrid();
+        JScrollPane scrollPane = new JScrollPane(gridPanel);
+
+        servicesPanel.add(topPanel, BorderLayout.NORTH);
+        servicesPanel.add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createPublishersGrid() {
+        JPanel gridPanel = new JPanel(new GridLayout(0, 3, 20, 20));
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Hardcoded publishers
+
+        publishers.add(new PublisherInfo("1", "Tech News", "Latest technology updates",
+                createPublisherIcon(Color.BLUE, "T")));
+        publishers.add(new PublisherInfo("2", "Sports Daily", "Live scores and analysis",
+                createPublisherIcon(Color.RED, "S")));
+        publishers.add(new PublisherInfo("3", "Finance Watch", "Market trends & reports",
+                createPublisherIcon(Color.GREEN, "F")));
+        publishers.add(new PublisherInfo("4", "Cooking Corner", "Recipes & tips",
+                createPublisherIcon(Color.ORANGE, "C")));
+        publishers.add(new PublisherInfo("5", "Travel Guide", "Destination reviews",
+                createPublisherIcon(Color.CYAN, "T")));
+        publishers.add(new PublisherInfo("6", "Gaming Hub", "Game reviews & news",
+                createPublisherIcon(Color.MAGENTA, "G")));
+
+        for (PublisherInfo publisher : publishers) {
+            gridPanel.add(createPublisherCard(publisher));
+        }
+
+        return gridPanel;
+    }
+
+    private JPanel createPublisherCard(PublisherInfo publisher) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        card.setPreferredSize(new Dimension(300, 200));
+
+        // Publisher Icon
+        JPanel iconPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JLabel iconLabel = new JLabel(publisher.getIcon());
+        iconPanel.add(iconLabel);
+        card.add(iconPanel, BorderLayout.NORTH);
+
+        // Publisher Info
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+
+        JLabel nameLabel = new JLabel(publisher.getName());
+        nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        nameLabel.setHorizontalAlignment(SwingConstants.CENTER);  // Center alignment
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);      // For BoxLayout centering
+
+        JTextArea descArea = new JTextArea(publisher.getDescription());
+        descArea.setEditable(false);
+        descArea.setLineWrap(true);
+        descArea.setWrapStyleWord(true);
+        descArea.setBackground(card.getBackground());
+        descArea.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        infoPanel.add(Box.createVerticalGlue());
+        infoPanel.add(nameLabel);
+        infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        infoPanel.add(descArea);
+        infoPanel.add(Box.createVerticalGlue());
+
+        card.add(infoPanel, BorderLayout.CENTER);
+
+        // Subscribe Button
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));  // Centered button
+        JButton subscribeButton = new JButton("Subscribe");
+        subscribeButton.addActionListener(e -> handleSubscription(publisher));
+        buttonPanel.add(subscribeButton);
+
+        card.add(buttonPanel, BorderLayout.SOUTH);
+
+        return card;
+    }
+    private void handleSubscription(PublisherInfo publisher) {
+        try {
+            service.subscribe(studentInfo.getId(), publisher.getId());
+            JOptionPane.showMessageDialog(this,
+                    "Subscribed to " + publisher.getName(),
+                    "Subscription Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (RemoteException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Subscription failed: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private ImageIcon createPublisherIcon(Color bgColor, String text) {
+        int size = 80;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = image.createGraphics();
+
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setColor(bgColor);
+        g2d.fillOval(0, 0, size, size);
+
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        FontMetrics fm = g2d.getFontMetrics();
+        int x = (size - fm.stringWidth(text)) / 2;
+        int y = (size - fm.getHeight()) / 2 + fm.getAscent();
+        g2d.drawString(text, x, y);
+
+        g2d.dispose();
+        return new ImageIcon(image);
+    }
+
+    private void refreshPublishers() {
+        servicesPanel.removeAll();
+        initializeServicesTab();
+        servicesPanel.revalidate();
+        servicesPanel.repaint();
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        SwingUtilities.invokeLater(() -> {
+            ServiceIF service = null; // Replace with actual service instance
+            StudentInfo studentInfo = new StudentInfo("John Doe", "123456");
+            new StudentGUI(service, studentInfo).setVisible(true);
         });
     }
-    // End of variables declaration
 }

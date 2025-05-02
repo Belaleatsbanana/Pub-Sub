@@ -2,47 +2,55 @@ package Publisher;
 
 import Service.ServiceIF;
 import common.PublisherInfo;
-import java.rmi.registry.*;
-
 import javax.swing.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 
 public class PublisherApp {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            try {
-                // 1) Lookup the remote ServiceIF stub
-//                ServiceIF service = (ServiceIF) LocateRegistry.getRegistry().lookup("Publisher");
-
-                // 2) Show registration dialog
-//                PublisherRegistrationGUI dlg = new PublisherRegistrationGUI();
-//                dlg.setVisible(true);
-//                if (!dlg.isConfirmed()) {
-//                    System.exit(0);
-//                }
-//
-//                // 3) Build the PublisherInfo DTO
-//                PublisherInfo info = new PublisherInfo(
-//                        dlg.getId(),
-//                        dlg.getName(),
-//                        dlg.getDesc(),
-//                        dlg.getIcon()
-//                );
-
-                // 4) Create and register the PublisherImpl callback
-                //PublisherIMP impl = new PublisherIMP(info, service);
-
-                // 5) Show the main publisher GUI
-//                PublisherMainGUI gui = new PublisherMainGUI(impl, info, service);
-//                gui.setVisible(true);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(null,
-                        "Failed to start Publisher: " + e.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-                System.exit(1);
-            }
+            PublisherRegistrationGUI registration = new PublisherRegistrationGUI(
+                    new PublisherRegistrationGUI.RegistrationListener() {
+                        @Override
+                        public void onRegistrationSuccess(PublisherInfo publisherInfo) {
+                            handleRegistrationSuccess(publisherInfo);
+                        }
+                    }
+            );
+            registration.setVisible(true);
         });
+    }
+
+    private static void handleRegistrationSuccess(PublisherInfo publisherInfo) {
+        try {
+            // RMI Connection
+            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
+            ServiceIF service = (ServiceIF) registry.lookup("Service");
+
+            // Validate service connection
+            if (service == null) {
+                throw new Exception("Service not found");
+            }
+
+            // Create publisher implementation
+            PublisherIMP publisherIMP = new PublisherIMP();
+
+            // Register publisher with service
+            service.registerPublisher(publisherIMP, publisherInfo);
+            System.out.println("Publisher registered successfully");
+
+            // Create and show main GUI
+            SwingUtilities.invokeLater(() -> {
+                PublisherGUI publisherGUI = new PublisherGUI(publisherIMP, publisherInfo, service);
+                publisherGUI.setVisible(true);
+            });
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null,
+                    "Connection to service failed: " + e.getMessage(),
+                    "Network Error",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 }

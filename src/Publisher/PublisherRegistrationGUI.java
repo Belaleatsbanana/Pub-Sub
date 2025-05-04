@@ -1,7 +1,6 @@
 package Publisher;
 
-import common.PublisherInfo;
-import common.StudentInfo;
+import common.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -38,19 +37,16 @@ public class PublisherRegistrationGUI extends JFrame {
     }
 
     private void addFormComponents() {
-        // Dark background for contrast
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         formPanel.setBackground(new Color(40, 40, 40));
         formPanel.setPreferredSize(new Dimension(500, 700));
 
-        // Centered container
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         centerPanel.setBackground(new Color(40, 40, 40));
 
-        // Profile Picture Section
         JPanel picturePanel = new JPanel();
         picturePanel.setLayout(new BoxLayout(picturePanel, BoxLayout.Y_AXIS));
         picturePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -70,7 +66,6 @@ public class PublisherRegistrationGUI extends JFrame {
         centerPanel.add(picturePanel);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
-        // Form Fields
         JPanel fieldsPanel = new JPanel();
         fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.Y_AXIS));
         fieldsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -109,7 +104,6 @@ public class PublisherRegistrationGUI extends JFrame {
         centerPanel.add(fieldsPanel);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
-        // Register Button
         registerButton = new JButton("Register Publisher");
         styleButton(registerButton, new Color(200, 80, 80));
         registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -179,7 +173,7 @@ public class PublisherRegistrationGUI extends JFrame {
     private void styleButton(JButton button, Color bgColor) {
         button.setFont(new Font("Segoe UI", Font.BOLD, 14));
         button.setBackground(bgColor);
-        // Dynamic text color for contrast
+
         int brightness = (bgColor.getRed() + bgColor.getGreen() + bgColor.getBlue()) / 3;
         button.setForeground(Color.BLACK);
         button.setFocusPainted(false);
@@ -215,7 +209,6 @@ public class PublisherRegistrationGUI extends JFrame {
         dispose();
     }
 
-    // Helper methods
     private ImageIcon loadDefaultIcon() {
         try (InputStream in = getClass().getResourceAsStream("/assets/default.jpg")) {
             return new ImageIcon(ImageIO.read(in));
@@ -227,7 +220,7 @@ public class PublisherRegistrationGUI extends JFrame {
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
-    // GUI components
+
     private JPanel formPanel;
     private JPanel yapPanel;
     private JLabel yap1;
@@ -246,7 +239,6 @@ public class PublisherRegistrationGUI extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
 
-        // Wider yap panel, less form space
         yapPanel.setBackground(new Color(240, 240, 240));
         yapPanel.setPreferredSize(new Dimension(600, 700));
 

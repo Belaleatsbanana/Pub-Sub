@@ -101,6 +101,12 @@ public class ServiceIMP extends UnicastRemoteObject implements ServiceIF {
     }
 
     @Override
+    public synchronized boolean isSubscribed(String studentId, String publisherId) throws RemoteException {
+        StudentRecord record = students.get(studentId);
+        return record != null && record.getSubs().contains(publisherId);
+    }
+
+    @Override
     public synchronized void subscribe(String studentId, String publisherId) throws RemoteException {
         StudentRecord record = students.get(studentId);
         if (record != null && publishers.containsKey(publisherId)) {
@@ -129,12 +135,12 @@ public class ServiceIMP extends UnicastRemoteObject implements ServiceIF {
         PublisherInfo info = pubRec.getInfo();
 
         // notify subscribers
+        System.out.println("Publishing message from " + publisherId);
         for (StudentRecord rec : students.values()) {
             if (rec.getSubs().contains(publisherId)) {
                 rec.getCallback().receiveNotification(info, message);
             }
         }
-        // record notification
         addNotification(new NotificationEntry(publisherId, message));
         logEvent("Publisher " + publisherId + " published message: " + message.getContent());
 
@@ -162,7 +168,6 @@ public class ServiceIMP extends UnicastRemoteObject implements ServiceIF {
         return pubs;
     }
 
-    // for GUI access:
     public Map<String, StudentRecord> getStudents() {
         return Collections.unmodifiableMap(students);
     }
@@ -183,14 +188,12 @@ public class ServiceIMP extends UnicastRemoteObject implements ServiceIF {
         return new ArrayList<>(logs);
     }
 
-    // helper to record logs
     private void logEvent(String event) {
         String timestamp = LocalDateTime.now().toString();
         logs.add(timestamp + " - " + event);
 
     }
 
-    // manage the notifications queue
     private void addNotification(NotificationEntry entry) {
         if (recentNotifications.size() >= MAX_NOTIFS) {
             recentNotifications.removeFirst();
@@ -198,7 +201,6 @@ public class ServiceIMP extends UnicastRemoteObject implements ServiceIF {
         recentNotifications.addLast(entry);
     }
 
-    // inner class for notifications
     public static class NotificationEntry {
         private final String publisherId;
         private final Message message;

@@ -97,7 +97,6 @@ public class StudentRegistrationGUI extends JFrame {
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
-        // Center panel inside form
         JPanel center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
         center.setBackground(new Color(40, 40, 40));
@@ -167,7 +166,7 @@ public class StudentRegistrationGUI extends JFrame {
         String email = emailField.getText().trim();
         String name = nameField.getText().trim();
 
-        if (!Pattern.matches("[\\w.+-]+@gmail\\.com", email) || name.isEmpty()) {
+        if (!Pattern.matches("[\\w.+-]+@[\\w.+-]+", email) || name.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "Enter a valid Gmail address and your full name.",
                     "Registration Error",

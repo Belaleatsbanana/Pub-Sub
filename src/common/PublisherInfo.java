@@ -1,8 +1,8 @@
 package common;
 
 import javax.swing.*;
-import java.io.Serial;
-import java.io.Serializable;
+import java.io.*;
+import java.util.Objects;
 
 public class PublisherInfo implements Serializable {
     @Serial
@@ -33,5 +33,18 @@ public class PublisherInfo implements Serializable {
 
     public ImageIcon getIcon() {
         return icon;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PublisherInfo)) return false;
+        PublisherInfo that = (PublisherInfo) o;
+        return Objects.equals(this.id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

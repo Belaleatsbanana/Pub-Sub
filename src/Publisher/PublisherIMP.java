@@ -6,8 +6,9 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
+
 public class PublisherIMP extends UnicastRemoteObject implements PublisherIF {
     public PublisherIMP() throws RemoteException {
-        super();
+        super(); // super dih mohema
     }
 }

@@ -23,11 +23,9 @@ public class PublisherApp {
 
     private static void handleRegistrationSuccess(PublisherInfo publisherInfo) {
         try {
-            // RMI Connection
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServiceIF service = (ServiceIF) registry.lookup("Service");
 
-            // Validate service connection
             if (service == null) {
                 throw new Exception("Service not found");
             }

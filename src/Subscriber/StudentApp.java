@@ -24,25 +24,21 @@ public class StudentApp {
 
     private static void handleRegistrationSuccess(StudentInfo studentInfo) {
         try {
-            // RMI Connection
             Registry registry = LocateRegistry.getRegistry("localhost", 1099);
             ServiceIF service = (ServiceIF) registry.lookup("Service");
 
-            // Register student with service
             if (service == null) {
                 throw new Exception("Service not found");
             }
 
-            // Create student GUI
             StudentGUI studentGUI = new StudentGUI(service, studentInfo);
 
-            // Register student with service
-            StudentIMP studentIMP = new StudentIMP(studentGUI);
+            StudentIMP studentIMP = studentGUI.getStudentImp();
+
             service.registerStudent(studentIMP, studentInfo);
             System.out.println("Student registered successfully");
 
-            // Show student GUI
-            SwingUtilities.invokeLater(() -> studentGUI.setVisible(true));
+            studentGUI.setVisible(true);
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null,

@@ -17,6 +17,7 @@ public interface ServiceIF extends Remote {
     void registerPublisher(PublisherIF publisher, PublisherInfo info) throws RemoteException;
     void deregisterPublisher(String publisherId) throws RemoteException;
 
+    boolean isSubscribed(String studentId, String publisherId) throws RemoteException;
     void subscribe(String studentId, String publisherId) throws RemoteException;
     void unsubscribe(String studentId, String publisherId) throws RemoteException;
 

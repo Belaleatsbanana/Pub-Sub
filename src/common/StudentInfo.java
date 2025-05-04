@@ -1,7 +1,5 @@
 package common;
-
-import java.io.Serial;
-import java.io.Serializable;
+import java.io.*;
 
 public class StudentInfo implements Serializable {
     @Serial
